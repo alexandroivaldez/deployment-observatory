@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deployment Observatory</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #0f1117;
+        color: #e2e8f0;
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      h1 {
+        font-size: 1.1rem;
+        font-weight: 500;
+        color: #94a3b8;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 2rem;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+      }
+
+      .card {
+        background: #1e2130;
+        border: 1px solid #2d3148;
+        border-radius: 10px;
+        padding: 1.25rem;
+      }
+
+      .card-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.5rem;
+      }
+
+      .card-value {
+        font-size: 1.4rem;
+        font-weight: 500;
+        font-family: "SF Mono", "Fira Code", monospace;
+        color: #f1f5f9;
+      }
+
+      .card-sub {
+        font-size: 0.78rem;
+        color: #64748b;
+        margin-top: 0.35rem;
+      }
+
+      .live-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        margin-right: 6px;
+        animation: pulse 1.5s infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+
+      .badge {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: #14532d;
+        color: #86efac;
+        margin-top: 0.5rem;
+      }
+
+      .history {
+      }
+
+      .history-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 0.75rem;
+      }
+
+      .history-row {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 0.6rem 0;
+        border-bottom: 1px solid #1e2130;
+        font-size: 0.82rem;
+      }
+
+      .history-row:last-child {
+        border-bottom: none;
+      }
+
+      .h-ver {
+        font-family: monospace;
+        color: #94a3b8;
+        min-width: 56px;
+      }
+      .h-msg {
+        flex: 1;
+        color: #e2e8f0;
+      }
+      .h-time {
+        color: #475569;
+        white-space: nowrap;
+      }
+      .h-bar {
+        width: 60px;
+        height: 3px;
+        background: #22c55e;
+        border-radius: 2px;
+        opacity: 0.6;
+      }
+      .h-bar.fail {
+        background: #ef4444;
+      }
+    </style>
+  </head>
+  <body>
+    <h1><span class="live-dot"></span>Deployment Observatory</h1>
+
+    <div class="grid">
+      <div class="card">
+        <div class="card-label">Version</div>
+        <div class="card-value" id="version">{{ version }}</div>
+        <div class="card-sub">currently running</div>
+        <span class="badge">healthy</span>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Commit</div>
+        <div class="card-value" id="commit">{{ commit }}</div>
+        <div class="card-sub">{{ branch }} branch</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Built at</div>
+        <div class="card-value" style="font-size: 1rem">{{ built_at }}</div>
+        <div class="card-sub">by {{ deployed_by }}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Host</div>
+        <div class="card-value" style="font-size: 1rem">{{ hostname }}</div>
+        <div class="card-sub">{{ region }}</div>
+      </div>
+    </div>
+
+    <div class="history">
+      <div class="history-title">Deploy history</div>
+
+      <div class="history-row">
+        <span class="h-ver">{{ version }}</span>
+        <span class="h-bar"></span>
+        <span class="h-msg">current deploy</span>
+        <span class="h-time">just now</span>
+      </div>
+      <div class="history-row">
+        <span class="h-ver">v0.0.3</span>
+        <span class="h-bar"></span>
+        <span class="h-msg">fix: correct healthcheck path</span>
+        <span class="h-time">2h ago</span>
+      </div>
+      <div class="history-row">
+        <span class="h-ver">v0.0.2</span>
+        <span class="h-bar"></span>
+        <span class="h-msg">feat: add SSE stream endpoint</span>
+        <span class="h-time">yesterday</span>
+      </div>
+      <div class="history-row">
+        <span class="h-ver">v0.0.1</span>
+        <span class="h-bar fail"></span>
+        <span class="h-msg">initial deploy - rollback</span>
+        <span class="h-time">3d ago</span>
+      </div>
+    </div>
+    <script>
+      const source = new EventSource("/stream");
+
+      source.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        const versionEl = document.getElementById("version");
+        const commitEl = document.getElementById("commit");
+
+        if (versionEl.textContent !== data.version) {
+          versionEl.textContent = data.version;
+          versionEl.style.transition = "opacity 0.3s";
+          versionEl.style.opacity = "0";
+          setTimeout(() => (versionEl.style.opacity = "1"), 300);
+        }
+
+        commitEl.textContent = data.commit;
+      };
+
+      source.onerror = function () {
+        console.warn("SSE stream lost — will auto-reconnect");
+      };
+    </script>
+  </body>
+</html>
