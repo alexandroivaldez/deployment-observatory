@@ -1,25 +1,25 @@
 terraform {
-    required_providers {
-      aws = {
-        source = "hashicorp/aws"
-        version = "~> 5.0"
-      }
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
     }
+  }
 
-    backend "s3" {
-    bucket         = "deployment-observatory-tfstate"
-    key            = "terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
+  backend "s3" {
+    bucket  = "deployment-observatory-tfstate"
+    key     = "terraform.tfstate"
+    region  = "us-east-1"
+    encrypt = true
   }
 }
 
 provider "aws" {
-    region = var.aws_region
+  region = var.aws_region
 }
 
 resource "aws_ecr_repository" "main" {
-  name = var.app_name
+  name                 = var.app_name
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -28,9 +28,9 @@ resource "aws_ecr_repository" "main" {
 }
 
 resource "aws_dynamodb_table" "deploys" {
-  name = "deploys"
+  name         = "deploys"
   billing_mode = "PAY_PER_REQUEST"
-  hash_key = "deploy_id"
+  hash_key     = "deploy_id"
 
   attribute {
     name = "deploy_id"
@@ -44,19 +44,19 @@ data "aws_vpc" "default" {
 
 data "aws_subnets" "default" {
   filter {
-    name = "vpc-id"
+    name   = "vpc-id"
     values = [data.aws_vpc.default.id]
   }
 }
 
 resource "aws_security_group" "alb" {
-  name = "${var.app_name}-alb"
+  name   = "${var.app_name}-alb"
   vpc_id = data.aws_vpc.default.id
 
   ingress {
-    from_port = 80
-    to_port = 80
-    protocol = "tcp"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
