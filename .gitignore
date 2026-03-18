@@ -1,5 +1,29 @@
+# environment and secrets
+.env
 .env.local
-*.log
+*.pem
+*.key
+
+# python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+.venv/
+
+# terraform
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.backup
+terraform/*.tfvars
+terraform/override.tf
+terraform/.terraform.lock.hcl
+
+# docker
+.dockerignore
+
+# system
 .DS_Store
+*.log
 .vscode/
 .idea/
