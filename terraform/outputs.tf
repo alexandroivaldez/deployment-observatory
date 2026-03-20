@@ -30,10 +30,10 @@ resource "aws_ecs_task_definition" "main" {
     }]
 
     environment = [
-      { name = "APP_VERSION",  value = "v0.0.1" },
-      { name = "GIT_COMMIT",   value = "local" },
-      { name = "AWS_REGION",   value = var.aws_region },
-      { name = "DEPLOYED_BY",  value = "terraform" }
+      { name = "APP_VERSION", value = "v0.0.1" },
+      { name = "GIT_COMMIT", value = "local" },
+      { name = "AWS_REGION", value = var.aws_region },
+      { name = "DEPLOYED_BY", value = "terraform" }
     ]
 
     logConfiguration = {
